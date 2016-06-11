@@ -39,6 +39,9 @@ defmodule Oxo.ConnCase do
       Ecto.Adapters.SQL.Sandbox.mode(Oxo.Repo, {:shared, self()})
     end
 
-    {:ok, conn: Phoenix.ConnTest.build_conn()}
+    conn =
+      Phoenix.ConnTest.build_conn()
+      |> Plug.Conn.assign(:current_user, nil)
+    {:ok, conn: conn}
   end
 end

@@ -9,18 +9,24 @@ defmodule Oxo.Router do
     plug :put_secure_browser_headers
   end
 
+  pipeline :browser_session do
+    plug Guardian.Plug.VerifySession
+    plug Guardian.Plug.LoadResource
+    plug Oxo.Plug.AssignCurrentUser
+  end
+
   pipeline :api do
     plug :accepts, ["json"]
   end
 
   scope "/", Oxo do
-    pipe_through :browser # Use the default browser stack
+    pipe_through [:browser, :browser_session]
 
     get "/", PageController, :index
-  end
+    get "/login", SessionController, :new
+    post "/login", SessionController, :create
+    delete "/logout", SessionController, :delete
 
-  # Other scopes may use custom stacks.
-  # scope "/api", Oxo do
-  #   pipe_through :api
-  # end
+    resources "/users", UserController, only: [:new, :create]
+  end
 end

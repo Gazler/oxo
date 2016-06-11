@@ -22,6 +22,20 @@ config :logger, :console,
   format: "$time $metadata[$level] $message\n",
   metadata: [:request_id]
 
+# Configure phoenix generators
+  config :phoenix, :generators,
+  binary_id: true
+
+
+config :guardian, Guardian,
+  allowed_algos: ["HS512"],
+  verify_module: Guardian.JWT,
+  issuer: "MyApp",
+  ttl: { 30, :days },
+  verify_issuer: true,
+  secret_key: "UAWyG3pSFjCsv9nRR+5Ms2TT42CINeeUFQr9g3iOCgkO9btWiTnm8G7ep8qhikcn",
+  serializer: Oxo.GuardianSerializer
+
 # Import environment specific config. This must remain at the bottom
 # of this file so it overrides the configuration defined above.
 import_config "#{Mix.env}.exs"
