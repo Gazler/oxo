@@ -15,6 +15,10 @@ defmodule Oxo.Router do
     plug Oxo.Plug.AssignCurrentUser
   end
 
+  pipeline :require_authentication do
+    plug Guardian.Plug.EnsureAuthenticated
+  end
+
   pipeline :api do
     plug :accepts, ["json"]
   end
@@ -25,8 +29,14 @@ defmodule Oxo.Router do
     get "/", PageController, :index
     get "/login", SessionController, :new
     post "/login", SessionController, :create
-    delete "/logout", SessionController, :delete
 
     resources "/users", UserController, only: [:new, :create]
+  end
+
+  scope "/", Oxo do
+    pipe_through [:browser, :browser_session, :require_authentication]
+
+    get "/games/:id", GameController, :show
+    delete "/logout", SessionController, :delete
   end
 end

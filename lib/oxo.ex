@@ -14,6 +14,7 @@ defmodule Oxo do
       supervisor(Oxo.Endpoint, []),
       # Start your own worker by calling: Oxo.Worker.start_link(arg1, arg2, arg3)
       # worker(Oxo.Worker, [arg1, arg2, arg3]),
+      worker(Oxo.GameRegistry, []),
     ]
 
     # See http://elixir-lang.org/docs/stable/elixir/Supervisor.html

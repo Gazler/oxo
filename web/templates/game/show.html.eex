@@ -1,0 +1,13 @@
+<div class="row">
+  <div class="col-sm-4"><h2>Game <%= @game_id %></h2></div>
+  <div class="col-sm-4"><h2 id="status"></h2></div>
+  <div class="col-sm-4"><h2 id="turn"></h2></div>
+</div>
+
+<div class="row" style="text-align: center">
+  <div id="board" class="board"></div>
+</div>
+
+<script>window.userId = "<%= @current_user.id %>"</script>
+<script>window.userToken = "<%= @user_token %>"</script>
+<script>window.gameId = "<%= @game_id %>"</script>
