@@ -1,1 +1,12 @@
 /* This file is for your main application css. */
+
+.grid-item {
+  width: 100px;
+  height: 100px;
+  font-size: 60px;
+  font-family: monospace;
+}
+
+.winline {
+  color: red !important;
+}
