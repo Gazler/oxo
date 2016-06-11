@@ -13,7 +13,7 @@ defmodule Oxo.GameServer do
     GenServer.call(pid, {:play, index, user_id})
   end
 
-  def init(opts) do
+  def init(_opts) do
     {:ok,%{
         board: [nil, nil, nil, nil, nil, nil, nil, nil, nil],
         players: [],
@@ -77,8 +77,9 @@ defmodule Oxo.GameServer do
     end
   end
 
+  defp valid_move?(_board, index) when index < 0, do: false
   defp valid_move?(board, index) do
-    case Enum.at(board, index) do
+    case Enum.at(board, index, :invalid) do
       nil -> true
       _   -> false
     end
