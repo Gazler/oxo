@@ -1,7 +1,6 @@
 defmodule Oxo.UserSocket do
   use Phoenix.Socket
-  alias Oxo.Repo
-  alias Oxo.User
+  alias Oxo.{Repo, User}
 
   channel "games:*", Oxo.GameChannel
 
