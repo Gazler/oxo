@@ -25,12 +25,7 @@ defmodule Oxo.GameServer do
   end
 
   def handle_call({:join, user_id}, _from, %{players: players} = state) when length(players) < 2 do
-    state = if user_id in players do
-      state
-    else
-      {players, status} = check_all_players_present(state, user_id)
-      %{state | players: players, status: status}
-    end
+    state = join_user(state, user_id)
     {:reply, {:ok, state}, state}
   end
 
@@ -78,10 +73,18 @@ defmodule Oxo.GameServer do
     end
   end
 
-  defp check_all_players_present(%{players: players}, user_id) do
+  defp join_user(state, user_id) do
+    if user_id in state.players do
+      state
+    else
+      update_game_players(state, user_id)
+    end
+  end
+
+  defp update_game_players(%{players: players} = state, user_id) do
     case [user_id | players] do
-      [p1]  -> {[p1], :waiting}
-      other -> {Enum.shuffle(other), :started}
+      [p1]  -> %{state | players: [p1], status: :waiting}
+      other -> %{state | players: Enum.shuffle(other), status: :started}
     end
   end
 
