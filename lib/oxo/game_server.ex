@@ -38,12 +38,9 @@ defmodule Oxo.GameServer do
     end
   end
 
-  def handle_call({:join, user_id}, _from, state) do
-    if user_id in state.players do
-      {:reply, {:ok, state}, state}
-    else
-      {:reply, {:error, :full}, state}
-    end
+  def handle_call({:join, user_id}, _from, %{players: players} = state) do
+    response = if user_id in players, do: {:ok, state}, else: {:error, :full}
+    {:reply, response, state}
   end
 
   def handle_call({:play, index, user_id}, _from, %{status: :started} = state) do
