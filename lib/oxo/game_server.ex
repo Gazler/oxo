@@ -24,14 +24,11 @@ defmodule Oxo.GameServer do
     }}
   end
 
-  def handle_call({:join, user_id}, _from, %{players: players} = state) when length(players) < 2 do
-    state = join_user(state, user_id)
-    {:reply, {:ok, state}, state}
-  end
-
-  def handle_call({:join, user_id}, _from, %{players: players} = state) do
-    response = if user_id in players, do: {:ok, state}, else: {:error, :full}
-    {:reply, response, state}
+  def handle_call({:join, user_id}, _from, state) do
+    case join_user(state, user_id) do
+      {:ok, state} -> {:reply, {:ok, state}, state}
+      other        -> {:reply, other, state}
+    end
   end
 
   def handle_call({:play, index, user_id}, _from, %{status: :started} = state) do
@@ -73,13 +70,12 @@ defmodule Oxo.GameServer do
     end
   end
 
-  defp join_user(state, user_id) do
-    if user_id in state.players do
-      state
-    else
-      update_game_players(state, user_id)
-    end
+  defp join_user(%{players: [p1]} = state, user_id) when user_id == p1, do: {:ok, state}
+  defp join_user(%{players: [p1, p2]} = state, user_id) when user_id in [p1, p2], do: {:ok, state}
+  defp join_user(%{players: players} = state, user_id) when length(players) < 2 do
+    {:ok, update_game_players(state, user_id)}
   end
+  defp join_user(_, _), do: {:error, :full}
 
   defp update_game_players(%{players: players} = state, user_id) do
     case [user_id | players] do
@@ -103,4 +99,5 @@ defmodule Oxo.GameServer do
   defp game_won(board) do
     if nil in board, do: false, else: :draw
   end
+
 end
