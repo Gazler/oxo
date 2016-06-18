@@ -33,11 +33,7 @@ defmodule Oxo.GameServer do
 
   def handle_call({:play, index, user_id}, _from, %{status: :started} = state) do
     if valid_move?(state.board, index) do
-      case {user_id, state.players, state.x_turn} do
-        {uid, [uid, _], true}  -> {:ok, 0}
-        {uid, [_, uid], false} -> {:ok, 1}
-        _                      -> {:error, :not_player_turn}
-      end
+      players_turn(state, user_id)
       |> case do
         {:ok, marker} ->
           board = List.replace_at(state.board, index, marker)
@@ -83,6 +79,10 @@ defmodule Oxo.GameServer do
       other -> %{state | players: Enum.shuffle(other), status: :started}
     end
   end
+
+  defp players_turn(%{players: [user_id, _], x_turn: true}, user_id), do: {:ok, 0}
+  defp players_turn(%{players: [_, user_id], x_turn: false}, user_id), do: {:ok, 1}
+  defp players_turn(_, _), do: {:error, :not_player_turn}
 
   defp game_won([w, w, w, _, _, _, _, _, _]) when not is_nil(w), do: {w, [0, 1, 2]}
   defp game_won([_, _, _, w, w, w, _, _, _]) when not is_nil(w), do: {w, [3, 4, 5]}
