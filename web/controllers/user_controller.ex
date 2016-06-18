@@ -13,7 +13,10 @@ defmodule Oxo.UserController do
 
     case Repo.insert(changeset) do
       {:ok, user} ->
-        redirect(put_flash(Guardian.Plug.sign_in(conn, user), :info, "User creted successfully"), to: page_path(conn, :index))
+        conn
+        |> Guardian.Plug.sign_in(user)
+        |> put_flash(:info, "User creted successfully")
+        |> redirect(to: page_path(conn, :index))
       {:error, changeset} ->
         render(conn, "new.html", changeset: changeset)
     end
