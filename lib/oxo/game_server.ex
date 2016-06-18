@@ -85,21 +85,19 @@ defmodule Oxo.GameServer do
     end
   end
 
-  defp game_won([a, b, c, d, e, f, g, h, i] = board) do
-    cond do
-      a == b and b == c and a != nil          -> {a, [0, 1, 2]}
-      d == e and e == f and d != nil          -> {d, [3, 4, 5]}
-      g == h and h == i and g != nil          -> {g, [6, 7, 8]}
+  defp game_won([w, w, w, _, _, _, _, _, _]) when not is_nil(w), do: {w, [0, 1, 2]}
+  defp game_won([_, _, _, w, w, w, _, _, _]) when not is_nil(w), do: {w, [3, 4, 5]}
 
-      a == d and d == g and a != nil          -> {a, [0, 3, 6]}
-      b == e and e == h and b != nil          -> {b, [1, 4, 7]}
-      c == f and f == i and c != nil          -> {c, [2, 5, 8]}
+  defp game_won([_, _, _, _, _, _, w, w, w]) when not is_nil(w), do: {w, [6, 7, 8]}
 
-      a == e and e == i and a != nil          -> {a, [0, 4, 8]}
-      c == e and e == g and c != nil          -> {c, [2, 4, 6]}
+  defp game_won([w, _, _, w, _, _, w, _, _]) when not is_nil(w), do: {w, [0, 3, 6]}
+  defp game_won([_, w, _, _, w, _, _, w, _]) when not is_nil(w), do: {w, [1, 4, 7]}
+  defp game_won([_, _, w, _, _, w, _, _, w]) when not is_nil(w), do: {w, [2, 5, 8]}
 
-      Enum.any?(board, fn x -> is_nil(x) end) -> false
-      true                                    -> :draw
-    end
+  defp game_won([w, _, _, _, w, _, _, _, w]) when not is_nil(w), do: {w, [0, 4, 8]}
+  defp game_won([_, _, w, _, w, _, w, _, _]) when not is_nil(w), do: {w, [2, 4, 6]}
+
+  defp game_won(board) do
+    if nil in board, do: false, else: :draw
   end
 end
