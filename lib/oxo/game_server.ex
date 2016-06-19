@@ -1,5 +1,6 @@
 defmodule Oxo.GameServer do
   use GenServer
+  alias Oxo.Game
 
   def start_link(opts \\ []) do
     GenServer.start_link(__MODULE__, opts)
@@ -14,14 +15,7 @@ defmodule Oxo.GameServer do
   end
 
   def init(_opts) do
-    {:ok,%{
-        board: [nil, nil, nil, nil, nil, nil, nil, nil, nil],
-        players: [],
-        status: :waiting,
-        x_turn: true,
-        winner: nil,
-        win_line: []
-    }}
+    {:ok, %Game{}}
   end
 
   def handle_call({:join, user_id}, _from, state) do
@@ -38,21 +32,21 @@ defmodule Oxo.GameServer do
     end
   end
 
-  defp join_user(%{players: [p1]} = state, user_id) when user_id == p1, do: {:ok, state}
-  defp join_user(%{players: [p1, p2]} = state, user_id) when user_id in [p1, p2], do: {:ok, state}
-  defp join_user(%{players: players} = state, user_id) when length(players) < 2 do
+  defp join_user(%Game{players: [p1]} = state, user_id) when user_id == p1, do: {:ok, state}
+  defp join_user(%Game{players: [p1, p2]} = state, user_id) when user_id in [p1, p2], do: {:ok, state}
+  defp join_user(%Game{players: players} = state, user_id) when length(players) < 2 do
     {:ok, update_game_players(state, user_id)}
   end
-  defp join_user(_, _), do: {:error, :full}
+  defp join_user(%Game{}, _), do: {:error, :full}
 
-  defp update_game_players(%{players: players} = state, user_id) do
+  defp update_game_players(%Game{players: players} = state, user_id) do
     case [user_id | players] do
       [p1]  -> %{state | players: [p1], status: :waiting}
       other -> %{state | players: Enum.shuffle(other), status: :started}
     end
   end
 
-  defp update_game_state(%{status: :started} = state, index, user_id) do
+  defp update_game_state(%Game{status: :started} = state, index, user_id) do
 		with :ok          <- valid_move(state, index),
          {:ok, marker} <- players_turn(state, user_id),
          new_state     =  play_turn(state, index, marker),
@@ -60,29 +54,29 @@ defmodule Oxo.GameServer do
          else: (other -> other)
   end
 
-  defp valid_move(_state, index) when index < 0, do: {:error, :invalid_move}
-  defp valid_move(%{board: board}, index) do
+  defp valid_move(%Game{}, index) when index < 0, do: {:error, :invalid_move}
+  defp valid_move(%Game{board: board}, index) do
     case Enum.at(board, index, :invalid) do
       nil -> :ok
       _   -> {:error, :invalid_move}
     end
   end
 
-  defp players_turn(%{players: [user_id, _], x_turn: true}, user_id), do: {:ok, 0}
-  defp players_turn(%{players: [_, user_id], x_turn: false}, user_id), do: {:ok, 1}
-  defp players_turn(_, _), do: {:error, :not_player_turn}
+  defp players_turn(%Game{players: [user_id, _], x_turn: true}, user_id), do: {:ok, 0}
+  defp players_turn(%Game{players: [_, user_id], x_turn: false}, user_id), do: {:ok, 1}
+  defp players_turn(%Game{}, _), do: {:error, :not_player_turn}
 
-  defp play_turn(state, index, marker) do
+  defp play_turn(%Game{} = state, index, marker) do
     state
     |> place_marker(index, marker)
     |> update_game_win_state()
   end
 
-  defp place_marker(state, index, marker) do
+  defp place_marker(%Game{} = state, index, marker) do
     %{state | board: List.replace_at(state.board, index, marker)}
   end
 
-  defp update_game_win_state(state) do
+  defp update_game_win_state(%Game{} = state) do
     case game_won(state.board) do
       false     -> %{state | x_turn: !state.x_turn}
       :draw     -> %{state | status: :finished, winner: false}
