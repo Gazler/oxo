@@ -38,14 +38,6 @@ defmodule Oxo.GameServer do
     end
   end
 
-  defp valid_move?(_board, index) when index < 0, do: false
-  defp valid_move?(board, index) do
-    case Enum.at(board, index, :invalid) do
-      nil -> true
-      _   -> false
-    end
-  end
-
   defp join_user(%{players: [p1]} = state, user_id) when user_id == p1, do: {:ok, state}
   defp join_user(%{players: [p1, p2]} = state, user_id) when user_id in [p1, p2], do: {:ok, state}
   defp join_user(%{players: players} = state, user_id) when length(players) < 2 do
@@ -61,22 +53,27 @@ defmodule Oxo.GameServer do
   end
 
   defp update_game_state(%{status: :started} = state, index, user_id) do
-    if valid_move?(state.board, index) do
-      players_turn(state, user_id)
-      |> case do
-          {:ok, marker} -> {:ok, play_turn(state, index, marker)}
-          other         -> other
-        end
-    else
-      {:error, :invalid_move}
+    state
+    |> valid_move(index)
+    |> players_turn(state, user_id)
+    |> play_turn(state, index)
+  end
+
+  defp valid_move(_state, index) when index < 0, do: {:error, :invalid_move}
+  defp valid_move(%{board: board}, index) do
+    case Enum.at(board, index, :invalid) do
+      nil -> :ok
+      _   -> {:error, :invalid_move}
     end
   end
 
-  defp players_turn(%{players: [user_id, _], x_turn: true}, user_id), do: {:ok, 0}
-  defp players_turn(%{players: [_, user_id], x_turn: false}, user_id), do: {:ok, 1}
-  defp players_turn(_, _), do: {:error, :not_player_turn}
+  defp players_turn({:error, _} = error, _, _), do: error
+  defp players_turn(:ok, %{players: [user_id, _], x_turn: true}, user_id), do: {:ok, 0}
+  defp players_turn(:ok, %{players: [_, user_id], x_turn: false}, user_id), do: {:ok, 1}
+  defp players_turn(:ok, _, _), do: {:error, :not_player_turn}
 
-  defp play_turn(state, index, marker) do
+  defp play_turn({:error, _} = error, _, _), do: error
+  defp play_turn({:ok, marker}, state, index) do
     state
     |> place_marker(index, marker)
     |> update_game_win_state()
@@ -88,9 +85,9 @@ defmodule Oxo.GameServer do
 
   defp update_game_win_state(state) do
     case game_won(state.board) do
-      false     -> %{state | x_turn: !state.x_turn}
-      :draw     -> %{state | status: :finished, winner: false}
-      {x, line} -> %{state | status: :finished, winner: x, win_line: line}
+      false     -> {:ok, %{state | x_turn: !state.x_turn}}
+      :draw     -> {:ok, %{state | status: :finished, winner: false}}
+      {x, line} -> {:ok, %{state | status: :finished, winner: x, win_line: line}}
     end
   end
 
