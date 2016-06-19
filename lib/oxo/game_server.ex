@@ -53,14 +53,11 @@ defmodule Oxo.GameServer do
   end
 
   defp update_game_state(%{status: :started} = state, index, user_id) do
-		with(:ok          <- valid_move(state, index),
-        {:ok, marker} <- players_turn(state, user_id),
-        new_state     =  play_turn(state, index, marker),
-        do: {:ok, new_state})
-    |> case do
-        {:ok, state} -> {:ok, state}
-        other        -> other
-    end
+		with :ok          <- valid_move(state, index),
+         {:ok, marker} <- players_turn(state, user_id),
+         new_state     =  play_turn(state, index, marker),
+         do: {:ok, new_state},
+         else: (other -> other)
   end
 
   defp valid_move(_state, index) when index < 0, do: {:error, :invalid_move}
