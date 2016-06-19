@@ -31,18 +31,10 @@ defmodule Oxo.GameServer do
     end
   end
 
-  def handle_call({:play, index, user_id}, _from, %{status: :started} = state) do
-    if valid_move?(state.board, index) do
-      state = play_turn(state, index, marker)
-      players_turn(state, user_id)
-      |> case do
-        {:ok, marker} ->
-          {:reply, {:ok, state}, state}
-        {:error, _} = error ->
-          {:reply, error, state}
-         end
-    else
-      {:reply, {:error, :invalid_move}, state}
+  def handle_call({:play, index, user_id}, _from, state) do
+    case update_game_state(state, index, user_id) do
+      {:ok, state}        -> {:reply, {:ok, state}, state}
+      {:error, _} = error -> {:reply, error, state}
     end
   end
 
@@ -65,6 +57,18 @@ defmodule Oxo.GameServer do
     case [user_id | players] do
       [p1]  -> %{state | players: [p1], status: :waiting}
       other -> %{state | players: Enum.shuffle(other), status: :started}
+    end
+  end
+
+  defp update_game_state(%{status: :started} = state, index, user_id) do
+    if valid_move?(state.board, index) do
+      players_turn(state, user_id)
+      |> case do
+          {:ok, marker} -> {:ok, play_turn(state, index, marker)}
+          other         -> other
+        end
+    else
+      {:error, :invalid_move}
     end
   end
 
