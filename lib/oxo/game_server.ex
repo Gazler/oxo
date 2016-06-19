@@ -36,21 +36,14 @@ defmodule Oxo.GameServer do
       players_turn(state, user_id)
       |> case do
         {:ok, marker} ->
-          state = play_move(state, index, marker)
-            case game_won(state.board) do
-              false ->
-                state = %{state | x_turn: !state.x_turn}
-                {:reply, {:ok, state}, state}
-              :draw ->
-                state = %{state | status: :finished, winner: false}
-                {:reply, {:ok, state}, state}
-              {x, line} ->
-                state = %{state | status: :finished, winner: x, win_line: line}
-                {:reply, {:ok, state}, state}
-            end
+          state =
+            state
+            |> place_marker(index, marker)
+            |> update_game_win_state()
+          {:reply, {:ok, state}, state}
         {:error, _} = error ->
           {:reply, error, state}
-      end
+         end
     else
       {:reply, {:error, :invalid_move}, state}
     end
@@ -82,8 +75,16 @@ defmodule Oxo.GameServer do
   defp players_turn(%{players: [_, user_id], x_turn: false}, user_id), do: {:ok, 1}
   defp players_turn(_, _), do: {:error, :not_player_turn}
 
-  defp play_move(state, index, marker) do
+  defp place_marker(state, index, marker) do
     %{state | board: List.replace_at(state.board, index, marker)}
+  end
+
+  defp update_game_win_state(state) do
+    case game_won(state.board) do
+      false     -> %{state | x_turn: !state.x_turn}
+      :draw     -> %{state | status: :finished, winner: false}
+      {x, line} -> %{state | status: :finished, winner: x, win_line: line}
+    end
   end
 
   defp game_won([w, w, w, _, _, _, _, _, _]) when not is_nil(w), do: {w, [0, 1, 2]}
