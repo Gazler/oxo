@@ -116,7 +116,7 @@ defmodule Oxo.GameTest do
         {[nil, nil, 1, nil, 1, nil, 1, nil, nil], {1, [2, 4, 6]}},
       ]
       Enum.each(wins, fn {board, result} ->
-        assert Game.won(board) == result
+        assert Game.won(%Game{board: board}) == result
       end)
     end
   end
