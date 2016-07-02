@@ -37,6 +37,7 @@ defmodule Oxo.Router do
     pipe_through [:browser, :browser_session, :require_authentication]
 
     get "/games/:id", GameController, :show
+    resources "/challenges", ChallengeController, only: [:index, :create]
     delete "/logout", SessionController, :delete
   end
 end

@@ -9,6 +9,8 @@ defmodule Oxo.User do
     field :password, :string, virtual: true
     field :password_confirmation, :string, virtual: true
 
+    has_many :challenges, Oxo.Challenge
+
     timestamps
   end
 

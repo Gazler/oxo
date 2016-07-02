@@ -1,0 +1,16 @@
+<div>
+  <%= if Enum.empty?(@challenges) do %>
+    <h3>No Challenges</h3>
+  <% else %>
+    <ul>
+    <%= for challenge <- @challenges do %>
+      <li>
+        <%= link("Join game with #{challenge.user.name}", to: game_path(@conn, :show, challenge)) %>
+      </li>
+    <% end  %>
+    </ul>
+  <% end %>
+
+</div>
+
+<%= link("New Challenge", to: challenge_path(@conn, :create), method: :post) %>

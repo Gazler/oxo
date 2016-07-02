@@ -2,3 +2,8 @@
   <h2><%= gettext "Welcome to %{name}", name: "Phoenix!" %></h2>
   <p class="lead">A productive web framework that<br />does not compromise speed and maintainability.</p>
 </div>
+
+<%=  if @current_user do %>
+  <%= link("View Challenges", to: challenge_path(@conn, :index)) %>
+  <%= link("New Challenge", to: challenge_path(@conn, :create), method: :post) %>
+<% end %>
