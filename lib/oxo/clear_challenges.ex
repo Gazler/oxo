@@ -6,13 +6,13 @@ defmodule Oxo.ClearChallenges do
   def clear_challenges(user, age \\ 300) do
     challenges = get_old_open_challenges(user, age)
     count = length(challenges)
-    Repo.transaction(fn ->
-      with {:ok, user} <- update_refused_challenges(user, count),
-           delete_challenges(challenges),
-           stop_games(challenges),
-        do: user,
-        else: ({error, reason} -> Repo.rollback(reason))
-    end)
+    params = %{refused_challenges: user.refused_challenges + count}
+
+    Ecto.Multi.new()
+    |> Ecto.Multi.update(:user, User.update_changeset(user, params))
+    |> Ecto.Multi.delete_all(:challenges, delete_challenges_query(challenges))
+    |> Ecto.Multi.run(:games, fn _ -> stop_games(challenges) end)
+    |> Repo.transaction()
   end
 
   defp get_old_open_challenges(user, age) do
@@ -23,19 +23,13 @@ defmodule Oxo.ClearChallenges do
     |> Oxo.Repo.all()
   end
 
-  defp delete_challenges(challenges) do
+  defp delete_challenges_query(challenges) do
     ids = Enum.map(challenges, &(&1.id))
     query = where(Challenge, [c], c.id in ^ids)
-    Repo.delete_all(query)
   end
 
   defp stop_games(challenges) do
     Enum.map(challenges, &GameRegistry.delete_game(&1.id))
-  end
-
-  def update_refused_challenges(user, count) do
-    user
-    |> User.update_changeset(%{refused_challenges: user.refused_challenges + count})
-    |> Repo.update()
+    {:ok, :stopped_games}
   end
 end
