@@ -6,6 +6,8 @@ defmodule Oxo.User do
     field :email, :string
     field :encrypted_password, :string
 
+    field :refused_challenges, :integer, default: 0
+
     field :password, :string, virtual: true
     field :password_confirmation, :string, virtual: true
 
@@ -24,6 +26,16 @@ defmodule Oxo.User do
     |> validate_confirmation(:password)
     |> unique_constraint(:email)
     |> put_pass_hash()
+  end
+
+  @doc """
+  Builds a changeset based on the `struct` and `params`.
+  """
+  def update_changeset(struct, params \\ %{}) do
+    struct
+    |> cast(params, [:refused_challenges])
+    |> validate_required([:refused_challenges])
+    |> validate_number(:refused_challenges, greater_than_or_equal_to: 0)
   end
 
   defp put_pass_hash(changeset) do
